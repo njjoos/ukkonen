@@ -5,6 +5,7 @@ struct edge;
 
 typedef struct node {
     struct edge** outgoing_edges;
+    struct node*  suffix_link;
 } node;
 
 typedef struct edge {
@@ -27,7 +28,7 @@ typedef struct suffix_tree {
 node*         create_node();
 edge*         create_edge(int*, int*);
 suffix_tree*  create_suffix_tree(char*);
-void          print_node(node*, int);
+void          print_node(node*, int*);
 void          print_suffix_tree(suffix_tree*);
 
 #endif //SRC_UKKONEN_H
