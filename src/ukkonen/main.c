@@ -4,7 +4,7 @@
 
 int main() {
 
-    suffix_tree* st = create_suffix_tree("qwertyuiop");
+    suffix_tree* st = create_suffix_tree("abc");
     print_suffix_tree(st);
 
     return 0;

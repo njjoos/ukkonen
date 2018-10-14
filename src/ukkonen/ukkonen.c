@@ -5,7 +5,16 @@
 
 #define ASCII_LENGTH 128
 
-node* create_node() {
+node* create_leaf_node() {
+
+    node* n           = malloc(sizeof(node));
+    n->outgoing_edges = NULL;
+    n->suffix_link    = NULL;
+
+    return n;
+}
+
+node* create_internal_node() {
 
     node* n           = malloc(sizeof(node));
     n->outgoing_edges = calloc(ASCII_LENGTH, sizeof(edge*)); // calloc to set everything to 0
@@ -14,56 +23,46 @@ node* create_node() {
     return n;
 }
 
-edge* create_edge(int* from, int* to) {
+edge* create_edge(int from, int* to) {
 
     edge* e     = malloc(sizeof(edge));
-    e->end_node = NULL;
+    e->end_node = create_leaf_node();
     e->from     = from;
     e->to       = to;
 }
 
 suffix_tree* create_suffix_tree(char* string) {
 
-    int*  end_point  = malloc(sizeof(int));
-    int   length     = (int) strlen(string);
-    node* root       = create_node();
-    active_point ap  = {root, '\0', 0};
-    int remainder    = 1;
+    int*         end_point  = malloc(sizeof(int));
+    int          length     = (int) strlen(string);
+    node*        root       = create_internal_node();
+    active_point ap         = {root, '\0', 0};
+    int          remainder  = 0;
+
+    root->id = 0;
 
     for (int i = 0; i <= length; i++) {
         *end_point = i;
-        node* last_split = NULL;
+        remainder++;
+        // node* previous_node = NULL; TODO: suffix_link addition
+        char cc = string[i]; // cc = current character
 
-        // Check if current character exists on active_point
-        char c = ap.active_edge == '\0' ? string[i] : ap.active_edge;
-        edge* current_edge = ap.active_node->outgoing_edges[c];
-        if (current_edge != 0 && string[*current_edge->from + ap.active_length] == c) {
-            // Edge exists with current suffix
-            ap.active_edge = c;
-            ap.active_length++;
-            remainder++;
-            // TODO: if at end of edge => active_point = {edge->end_node, '\0', 0}
-        } else {
-            // TODO: suffix_link
-            while (remainder > 0) {
-                if (current_edge == 0) {
-                    // Edge does not exist on active_node => create new leaf node
-                    int* begin_point = malloc(sizeof(int));
-                    *begin_point = i;
-                    ap.active_node->outgoing_edges[c] = create_edge(begin_point, end_point);
+        while (remainder > 0) {
+            if (ap.active_length == 0) {
+                // When the active length is zero, we just add a leaf node to root.
+                if (root->outgoing_edges[cc] != 0) {
+                    // If there exists an edge with the current character, update the active point
+                    ap.active_edge = cc;
+                    ap.active_length++;
                 } else {
-                    // Edge exists but new character on that edge => split
-
-                    // TODO: Rule 2
+                    // There is no edge, create one with the current character
+                    root->outgoing_edges[cc] = create_edge(i, end_point);
+                    remainder--;
                 }
-                remainder--;
+            } else {
+                // TODO
             }
-
-            remainder = 1;
-
         }
-
-
     }
 
     suffix_tree* st  = malloc(sizeof(suffix_tree));
@@ -73,24 +72,45 @@ suffix_tree* create_suffix_tree(char* string) {
     return st;
 }
 
-void print_node(node* n, int* id) {
+void apply_ids(node* n, int* id) {
 
+    // Depth first application of all the ids
     for (int i = 0; i < ASCII_LENGTH; i++) {
         edge* e = n->outgoing_edges[i];
         if (e != 0) {
-            printf("%c @ %d-%d\n", (char) i, *e->from, *e->to);
+            e->end_node->id = ++(*id);
+            if (e->end_node->outgoing_edges != NULL) {
+                apply_ids(e->end_node, id);
+            }
         }
+    }
+}
+
+void print_node(node* n, int from, int to) {
+
+    if (n->outgoing_edges != NULL) {
+        // Internal node
+        printf("TODO: internal node! \n");
+        for (int i = 0; i < ASCII_LENGTH; i++) {
+            edge* e = n->outgoing_edges[i];
+            if (e != 0) {
+                print_node(e->end_node, e->from, *e->to);
+            }
+        }
+    } else {
+        // Leaf node
+        printf("%d @ %d-%d\n", n->id, from, to);
     }
 }
 
 void print_suffix_tree(suffix_tree* tree) {
 
-    printf("String: %s\n", tree->string);
-    printf("Tree:\n");
-    printf("-------------------------\n");
+    printf("\nString: %s\n\n", tree->string);
     int* id = malloc(sizeof(int));
     *id = 0;
-    print_node(tree->root, id);
+    apply_ids(tree->root, id);
+    print_node(tree->root, 0 , 0);
+    printf("Gank: %d\n", *id);
     free(id);
 }
 
