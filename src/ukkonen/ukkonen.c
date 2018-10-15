@@ -23,6 +23,16 @@ node* create_internal_node() {
     return n;
 }
 
+active_point* create_and_init_active_point(node* root) {
+
+    active_point* ap  = malloc(sizeof(active_point));
+    ap->active_node   = root;
+    ap->active_edge   = '\0';
+    ap->active_length = 0;
+
+    return ap;
+}
+
 edge* create_edge(int from, int* to) {
 
     edge* e     = malloc(sizeof(edge));
@@ -31,36 +41,74 @@ edge* create_edge(int from, int* to) {
     e->to       = to;
 }
 
+void split_edge(active_point* ap, const char* string, char cc, int from, int* to) {
+    edge* current_edge = ap->active_node->outgoing_edges[ap->active_edge];
+    node* node1 = current_edge->end_node;
+    node* node2 = create_internal_node();
+
+    // Create new leaf node for new character
+    node2->outgoing_edges[cc] = create_edge(from, to);
+
+    // Fix the rest
+    int  ex_from = current_edge->from + ap->active_length;
+    int* ex_to = current_edge->to;
+    node2->outgoing_edges[string[ex_from]] = create_edge(ex_from, ex_to);
+    node2->outgoing_edges[string[ex_from]]->end_node = node1;
+
+    current_edge->to = malloc(sizeof(int));
+    *current_edge->to = current_edge->from + ap->active_length - 1;
+    current_edge->end_node = node2;
+}
+
 suffix_tree* create_suffix_tree(char* string) {
 
-    int*         end_point  = malloc(sizeof(int));
-    int          length     = (int) strlen(string);
-    node*        root       = create_internal_node();
-    active_point ap         = {root, '\0', 0};
-    int          remainder  = 0;
+    int*          end_point  = malloc(sizeof(int));
+    int           length     = (int) strlen(string);
+    node*         root       = create_internal_node();
+    active_point* ap         = create_and_init_active_point(root);
+    int           remainder  = 0;
 
     root->id = 0;
 
     for (int i = 0; i <= length; i++) {
         *end_point = i;
         remainder++;
-        // node* previous_node = NULL; TODO: suffix_link addition
+        node* previous_node = NULL;
         char cc = string[i]; // cc = current character
 
         while (remainder > 0) {
-            if (ap.active_length == 0) {
-                // When the active length is zero, we just add a leaf node to root.
-                if (root->outgoing_edges[cc] != 0) {
+            if (ap->active_length == 0) {
+                // When the active length is zero, we just add a leaf node to the active node
+                if (ap->active_node->outgoing_edges[cc] != 0) {
                     // If there exists an edge with the current character, update the active point
-                    ap.active_edge = cc;
-                    ap.active_length++;
+                    ap->active_edge = cc;
+                    ap->active_length++;
                 } else {
                     // There is no edge, create one with the current character
-                    root->outgoing_edges[cc] = create_edge(i, end_point);
+                    ap->active_node->outgoing_edges[cc] = create_edge(i, end_point);
                     remainder--;
+                    // Rule 3
+                    if (ap->active_node != root) {
+                        if (ap->active_node->suffix_link == NULL)
+                            ap->active_node = root;
+                        else
+                            ap->active_node = ap->active_node->suffix_link;
+                    }
                 }
             } else {
-                // TODO
+                // Active length > 0: we end at the middle of an edge
+                edge* current_edge = ap->active_node->outgoing_edges[ap->active_edge];
+                char edge_char = string[current_edge->from + ap->active_length];
+                if (cc == edge_char) {
+                    // Current character exists on edge behind the active point
+                    ap->active_length++;
+                } else {
+                    // New character on current edge => split
+                    split_edge(ap, string, cc, i, end_point);
+                    ap->active_length--;
+                    ap->active_edge = ap->active_length == 0 ? (char) '\0' : string[i - ap->active_length];
+                    remainder--;
+                }
             }
         }
     }
@@ -110,7 +158,6 @@ void print_suffix_tree(suffix_tree* tree) {
     *id = 0;
     apply_ids(tree->root, id);
     print_node(tree->root, 0 , 0);
-    printf("Gank: %d\n", *id);
     free(id);
 }
 

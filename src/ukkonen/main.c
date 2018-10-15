@@ -4,8 +4,8 @@
 
 int main() {
 
-    suffix_tree* st = create_suffix_tree("abc");
+    suffix_tree* st = create_suffix_tree("aa");
     print_suffix_tree(st);
-
+    // TODO: free suffix_tree
     return 0;
 }
