@@ -82,6 +82,8 @@ void check_and_fix(active_point* ap, const char* string) {
 
 suffix_tree* create_suffix_tree(char* string) {
 
+    // TODO: fully test algorithm [easy-medium] (how? best way? ..?)
+
     int*          end_point  = malloc(sizeof(int));
     int           length     = (int) strlen(string);
     node*         root       = create_internal_node();
@@ -179,8 +181,10 @@ void apply_ids(node* n, int* id) {
 
 void print_node(node* n, int from, int to) {
 
+    // TODO: memorizing the last edge for full substring indices [medium]
     if (n->outgoing_edges != NULL) {
         // Internal node
+        // TODO: internal node presentation [hard]
         if (n->suffix_link)
             printf("%d @ %d-%d = link[%d]\n", n->id, from, to, n->suffix_link->id);
         else
