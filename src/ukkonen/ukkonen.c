@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include "ukkonen.h"
 
-#define ASCII_LENGTH 128
+#define ASCII_LENGTH 256
 
 node* create_leaf_node() {
 
@@ -42,6 +42,7 @@ edge* create_edge(int from, int* to) {
 }
 
 void split_edge(active_point* ap, const char* string, char cc, int from, int* to) {
+
     edge* current_edge = ap->active_node->outgoing_edges[ap->active_edge];
     node* node1 = current_edge->end_node;
     node* node2 = create_internal_node();
@@ -83,6 +84,8 @@ suffix_tree* create_suffix_tree(char* string) {
                     // If there exists an edge with the current character, update the active point
                     ap->active_edge = cc;
                     ap->active_length++;
+                    // We're done with the current character, go to the next
+                    goto next;
                 } else {
                     // There is no edge, create one with the current character
                     ap->active_node->outgoing_edges[cc] = create_edge(i, end_point);
@@ -98,19 +101,24 @@ suffix_tree* create_suffix_tree(char* string) {
             } else {
                 // Active length > 0: we end at the middle of an edge
                 edge* current_edge = ap->active_node->outgoing_edges[ap->active_edge];
-                char edge_char = string[current_edge->from + ap->active_length];
-                if (cc == edge_char) {
+                char next_char = string[current_edge->from + ap->active_length];
+                if (cc == next_char) {
                     // Current character exists on edge behind the active point
                     ap->active_length++;
+                    // We're done with the current character, go to the next one
+                    goto next;
                 } else {
                     // New character on current edge => split
                     split_edge(ap, string, cc, i, end_point);
                     ap->active_length--;
                     ap->active_edge = ap->active_length == 0 ? (char) '\0' : string[i - ap->active_length];
+                    printf("Active edge: %c\n", ap->active_edge);
                     remainder--;
                 }
             }
         }
+        // Do nothing, used to get out of while loop
+        next: {};
     }
 
     suffix_tree* st  = malloc(sizeof(suffix_tree));
@@ -138,7 +146,7 @@ void print_node(node* n, int from, int to) {
 
     if (n->outgoing_edges != NULL) {
         // Internal node
-        printf("TODO: internal node! \n");
+        printf("%d @ %d-%d = ||\n", n->id, from, to);
         for (int i = 0; i < ASCII_LENGTH; i++) {
             edge* e = n->outgoing_edges[i];
             if (e != 0) {
