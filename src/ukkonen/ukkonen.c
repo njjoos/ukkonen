@@ -189,21 +189,30 @@ void apply_ids(node* n, int* id) {
     }
 }
 
-void print_node(node* n, int from, int to, int prev_depth, int curr_depth) {
+void print_node(node* n, char* string, int from, int to, int prev_depth, int curr_depth) {
 
     if (n->outgoing_edges != NULL) {
         // Internal node
-        // TODO: internal node presentation [hard]
-        if (n->suffix_link)
-            printf("%d @ %d-%d = link[%d]\n", n->id, from - prev_depth, to, n->suffix_link->id);
-        else
-            printf("%d @ %d-%d = link[None]\n", n->id, from - prev_depth, to);
+        char str[256];
+        sprintf(str, "%d @ %d-%d = ", n->id, from - prev_depth, to);
+        for (int i = 0; i < ASCII_LENGTH; i++) {
+            edge* e = n->outgoing_edges[i];
+
+            if (e != 0) {
+                char str_e[128];
+                sprintf(str_e, " %d:%d,%d-%d |", string[e->from], e->end_node->id, e->from, *e->to);
+                strcat(str, str_e);
+            }
+        }
+        strcat(str, "\n");
+
+        printf(str);
 
         for (int i = 0; i < ASCII_LENGTH; i++) {
             edge* e = n->outgoing_edges[i];
 
             if (e != 0) {
-                print_node(e->end_node, e->from, *e->to, curr_depth, curr_depth + (*e->to - e->from) + 1);
+                print_node(e->end_node, string, e->from, *e->to, curr_depth, curr_depth + (*e->to - e->from) + 1);
             }
         }
     } else {
@@ -218,8 +227,6 @@ void print_suffix_tree(suffix_tree* tree) {
     int* id = malloc(sizeof(int));
     *id = 0;
     apply_ids(tree->root, id);
-    print_node(tree->root, 0 , 0, 0, 0);
+    print_node(tree->root, tree->string, 0 , 0, 0, 0);
     free(id);
 }
-
-
