@@ -204,6 +204,7 @@ void print_node(node* n, int from, int to, int prev_depth, int curr_depth) {
                 strcat(str, str_e);
             }
         }
+        str[strlen(str)-1] = ' ';
         strcat(str, "\n");
 
         printf(str);
