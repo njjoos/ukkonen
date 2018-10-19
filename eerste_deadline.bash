@@ -2,7 +2,7 @@
 # Name: Testcode voor de eerste deadline.
 #
 # Voer dit bestand uit in de root van je project. 
-# De map waarin de map src zit.
+# De map waarin het bestand sources en de map src zit
 #
 # By Robbert Gurdeep Singh
 ################################################################################
@@ -10,19 +10,29 @@ TMPDIR=$(mktemp -d)
 trap "rm -rf $TMPDIR" EXIT
 
 # Get sources
-sources=$(cat src/sources | tr "\t" " " | grep "^\s*ukkonen")
-sources=$(echo ${sources#*:} | tr " " "\n" | tr "\n" " ")
 
-# Get Makefile and execute it
-sed -n '/#MAKEFILE\x2DSTART/,/#EXPECTED\x2DSTART/p' $0 \
-    | tail -n+2 | head -n-1 \
-    | make clean ukkonen OUTDIR="$TMPDIR" SOURCES="${sources#*:}" -f - -C src
-makeExit=$?
+ 
+if [ -f "sources" ];
+then
+    sources=$(cat sources | tr "\t" " " | grep "^\s*ukkonen")
+    sources=$(echo ${sources#*:} | tr " " "\n" | tr "\n" " ")
+
+    # Get Makefile and execute it
+    sed -n '/#MAKEFILE\x2DSTART/,/#EXPECTED\x2DSTART/p' $0 \
+        | tail -n+2 | head -n-1 \
+        | make -B ukkonen OUTDIR="$TMPDIR" SOURCES="${sources#*:}" -f - -C src
+    makeExit=$?
+else
+   echo "Het sources bestand kon niet gevonden worden  "
+   makeExit=4  
+fi
+
+
 if [ $makeExit -ne 0 ]; then
     echo "compilatie gefaald"
 else
     # If make succeeded, comtinue to test the output
-    echo -n "abacabc_" | $TMPDIR/ukkonen > $TMPDIR/output.txt
+    echo -n "abacabc_" | "$TMPDIR/ukkonen" > $TMPDIR/output.txt
     < $TMPDIR/output.txt tr -d " \t" \
         | sort -k1,1 -t'|' -n \
         | sed 's/[@|=]/ & /g;/^$/d' \
@@ -59,9 +69,6 @@ all: ukkonen
 
 ukkonen: $(SOURCES)
 	gcc $(flags) -o $(OUTDIR)/$@ $^
-
-clean:
-	(rm $(OUTDIR)/ukkonen) || true
 
 #EXPECTED-START
 0 @  -  = 95:1,7-7 | 97:2,0-0 | 98:7,1-1 | 99:10,3-3

@@ -4,7 +4,7 @@
 
 int main() {
 
-    suffix_tree* st = create_suffix_tree("abacabc");
+    suffix_tree* st = create_suffix_tree("abacaba$");
     print_suffix_tree(st);
     // TODO: free suffix_tree if time over
     return 0;

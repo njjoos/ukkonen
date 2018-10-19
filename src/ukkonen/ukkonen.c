@@ -66,19 +66,22 @@ node* split_edge(active_point* ap, const char* string, char cc, int from, int* t
 void check_and_fix(active_point* ap, const char* string) {
 
     edge* current_edge = ap->active_node->outgoing_edges[ap->active_edge];
-    int edge_length = *current_edge->to - current_edge->from + 1;
+    if (current_edge) {
+        int edge_length = *current_edge->to - current_edge->from + 1;
 
-    if (ap->active_length == edge_length) {
-        ap->active_node = current_edge->end_node;
-        ap->active_edge = '\0';
-        ap->active_length = 0;
-    } else if (ap->active_length > edge_length) {
-        ap->active_node = current_edge->end_node;
-        ap->active_edge = string[*current_edge->to + 1];
-        ap->active_length -= edge_length;
-        // It might be that the length of the next active_edge is also too small so recall it
-        check_and_fix(ap, string);
+        if (ap->active_length == edge_length && current_edge->end_node) {
+            ap->active_node = current_edge->end_node;
+            ap->active_edge = '\0';
+            ap->active_length = 0;
+        } else if (ap->active_length > edge_length) {
+            ap->active_node = current_edge->end_node;
+            ap->active_edge = string[*current_edge->to + 1];
+            ap->active_length -= edge_length;
+            // It might be that the length of the next active_edge is also too small so recall it
+            check_and_fix(ap, string);
+        }
     }
+
 }
 
 suffix_tree* create_suffix_tree(char* string) {
@@ -93,7 +96,7 @@ suffix_tree* create_suffix_tree(char* string) {
 
     root->id = 0;
 
-    for (int i = 0; i <= length; i++) {
+    for (int i = 0; i < length; i++) {
         *end_point = i;
         remainder++;
         node* previous_node = NULL;
@@ -156,6 +159,7 @@ suffix_tree* create_suffix_tree(char* string) {
                         // Rule 1
                         ap->active_length--;
                         ap->active_edge = string[i - ap->active_length];
+                        check_and_fix(ap, string);
                     }
 
                     remainder--;
@@ -194,7 +198,10 @@ void print_node(node* n, int from, int to, int prev_depth, int curr_depth) {
     if (n->outgoing_edges != NULL) {
         // Internal node
         char str[256];
-        sprintf(str, "%d @ %d-%d = ", n->id, from - prev_depth, to);
+        if (curr_depth == 0)
+            sprintf(str, "%d @  -  = ", n->id);
+        else
+            sprintf(str, "%d @ %d-%d = ", n->id, from - prev_depth, to);
         for (int i = 0; i < ASCII_LENGTH; i++) {
             edge* e = n->outgoing_edges[i];
 
@@ -224,7 +231,6 @@ void print_node(node* n, int from, int to, int prev_depth, int curr_depth) {
 
 void print_suffix_tree(suffix_tree* tree) {
 
-    printf("\nString: %s\n\n", tree->string);
     int* id = malloc(sizeof(int));
     *id = 0;
     apply_ids(tree->root, id);
