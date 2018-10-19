@@ -63,7 +63,7 @@ node* split_edge(active_point* ap, const char* string, char cc, int from, int* t
     return node2;
 }
 
-void check_and_fix(active_point* ap, const char* string) {
+void fix_active_point(active_point *ap, const char *string, int current_index) {
 
     edge* current_edge = ap->active_node->outgoing_edges[ap->active_edge];
     if (current_edge) {
@@ -75,10 +75,10 @@ void check_and_fix(active_point* ap, const char* string) {
             ap->active_length = 0;
         } else if (ap->active_length > edge_length) {
             ap->active_node = current_edge->end_node;
-            ap->active_edge = string[*current_edge->to + 1];
+            ap->active_edge = string[current_index + 1];
             ap->active_length -= edge_length;
             // It might be that the length of the next active_edge is also too small so recall it
-            check_and_fix(ap, string);
+            fix_active_point(ap, string, current_index);
         }
     }
 
@@ -135,7 +135,7 @@ suffix_tree* create_suffix_tree(char* string) {
                     // Current character exists on edge behind the active point
                     ap->active_length++;
                     // Check if we reached the end of our edge which then the active point must be changed
-                    check_and_fix(ap, string);
+                    fix_active_point(ap, string, i-remainder+1);
                     // We're done with the current character, go to the next one
                     goto next;
                 } else {
@@ -159,7 +159,7 @@ suffix_tree* create_suffix_tree(char* string) {
                         // Rule 1
                         ap->active_length--;
                         ap->active_edge = string[i - ap->active_length];
-                        check_and_fix(ap, string);
+                        fix_active_point(ap, string, i-remainder+2);
                     }
 
                     remainder--;
@@ -207,7 +207,7 @@ void print_node(node* n, int from, int to, int prev_depth, int curr_depth) {
 
             if (e != 0) {
                 char str_e[128];
-                sprintf(str_e, " %d:%d,%d-%d |", i, e->end_node->id, e->from, *e->to);
+                sprintf(str_e, " %c:%d,%d-%d |", i, e->end_node->id, e->from, *e->to);
                 strcat(str, str_e);
             }
         }
