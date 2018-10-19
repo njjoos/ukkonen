@@ -5,6 +5,7 @@
 
 #define ASCII_LENGTH 256
 
+// Creates a leaf node
 node* create_leaf_node() {
 
     node* n           = malloc(sizeof(node));
@@ -14,6 +15,7 @@ node* create_leaf_node() {
     return n;
 }
 
+// Creates an internal node, the only difference is that this has outgoing edges
 node* create_internal_node() {
 
     node* n           = malloc(sizeof(node));
@@ -23,6 +25,7 @@ node* create_internal_node() {
     return n;
 }
 
+// Creates and initializes the active point that will be used
 active_point* create_and_init_active_point(node* root) {
 
     active_point* ap  = malloc(sizeof(active_point));
@@ -33,6 +36,7 @@ active_point* create_and_init_active_point(node* root) {
     return ap;
 }
 
+// Creates an edge
 edge* create_edge(int from, int* to) {
 
     edge* e     = malloc(sizeof(edge));
@@ -41,6 +45,7 @@ edge* create_edge(int from, int* to) {
     e->to       = to;
 }
 
+// Splits an edge based on the active point
 node* split_edge(active_point* ap, const char* string, char cc, int from, int* to) {
 
     edge* current_edge = ap->active_node->outgoing_edges[ap->active_edge];
@@ -63,6 +68,8 @@ node* split_edge(active_point* ap, const char* string, char cc, int from, int* t
     return node2;
 }
 
+// Fix the active point. This will traverse down the active point and will adjust the active point when we reach
+// the end of the current edge or when the active length is larger than the length of the current edge
 void fix_active_point(active_point *ap, const char *string, int current_index) {
 
     edge* current_edge = ap->active_node->outgoing_edges[ap->active_edge];
@@ -77,16 +84,15 @@ void fix_active_point(active_point *ap, const char *string, int current_index) {
             ap->active_node = current_edge->end_node;
             ap->active_edge = string[current_index + 1];
             ap->active_length -= edge_length;
-            // It might be that the length of the next active_edge is also too small so recall it
+            // It might also be that the length of the next active edge is too small so this fixes that
             fix_active_point(ap, string, current_index);
         }
     }
 
 }
 
+// Create a suffix tree using Ukkonen's algorithm [time-complexity: O(n), memory-complexity: O(n)]
 suffix_tree* create_suffix_tree(char* string) {
-
-    // TODO: fully test algorithm [easy-medium] (how? best way? ..?)
 
     int*          end_point  = malloc(sizeof(int));
     int           length     = (int) strlen(string);
@@ -111,6 +117,7 @@ suffix_tree* create_suffix_tree(char* string) {
                     // If there exists an edge with the current character, update the active point
                     ap->active_edge = cc;
                     ap->active_length++;
+                    fix_active_point(ap, string, 0);
                     // We're done with the current character, go to the next
                     goto next;
                 } else {
@@ -177,6 +184,7 @@ suffix_tree* create_suffix_tree(char* string) {
     return st;
 }
 
+// Apply the ids in a depth first search way
 void apply_ids(node* n, int* id) {
 
     // Depth first application of all the ids
@@ -193,6 +201,7 @@ void apply_ids(node* n, int* id) {
     }
 }
 
+// Recursive function that prints a node
 void print_node(node* n, int from, int to, int prev_depth, int curr_depth) {
 
     if (n->outgoing_edges != NULL) {
@@ -229,6 +238,7 @@ void print_node(node* n, int from, int to, int prev_depth, int curr_depth) {
     }
 }
 
+// Main function for printing a suffix tree
 void print_suffix_tree(suffix_tree* tree) {
 
     int* id = malloc(sizeof(int));
