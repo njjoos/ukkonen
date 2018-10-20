@@ -103,10 +103,10 @@ suffix_tree* create_suffix_tree(char* string) {
     root->id = 0;
 
     for (int i = 0; i < length; i++) {
-        *end_point = i;
-        remainder++;
+        *end_point          = i;
         node* previous_node = NULL;
-        char cc = string[i]; // cc = current character
+        char  cc            = string[i]; // cc = current character
+        remainder++;
 
         while (remainder > 0) {
 
@@ -136,7 +136,7 @@ suffix_tree* create_suffix_tree(char* string) {
             } else {
                 // Active length > 0: we end at the middle of an edge
                 edge* current_edge = ap->active_node->outgoing_edges[ap->active_edge];
-                char next_char = string[current_edge->from + ap->active_length];
+                char  next_char    = string[current_edge->from + ap->active_length];
 
                 if (cc == next_char) {
                     // Current character exists on edge behind the active point
@@ -152,7 +152,7 @@ suffix_tree* create_suffix_tree(char* string) {
                     // Rule 2: add suffix links
                     if (previous_node != NULL) {
                         previous_node->suffix_link = new_node;
-                        previous_node = new_node;
+                        previous_node              = new_node;
                     } else
                         previous_node = new_node;
 
@@ -178,8 +178,8 @@ suffix_tree* create_suffix_tree(char* string) {
     }
 
     suffix_tree* st  = malloc(sizeof(suffix_tree));
-    st->root   = root;
-    st->string = string;
+    st->root         = root;
+    st->string       = string;
 
     return st;
 }
@@ -216,7 +216,7 @@ void print_node(node* n, int from, int to, int prev_depth, int curr_depth) {
 
             if (e != 0) {
                 char str_e[128];
-                sprintf(str_e, " %c:%d,%d-%d |", i, e->end_node->id, e->from, *e->to);
+                sprintf(str_e, " %d:%d,%d-%d |", i, e->end_node->id, e->from, *e->to);
                 strcat(str, str_e);
             }
         }
@@ -242,7 +242,8 @@ void print_node(node* n, int from, int to, int prev_depth, int curr_depth) {
 void print_suffix_tree(suffix_tree* tree) {
 
     int* id = malloc(sizeof(int));
-    *id = 0;
+    *id     = 0;
+
     apply_ids(tree->root, id);
     print_node(tree->root, 0 , 0, 0, 0);
     free(id);
