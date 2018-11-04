@@ -30,7 +30,7 @@ active_point* create_and_init_active_point(node* root) {
 
     active_point* ap  = malloc(sizeof(active_point));
     ap->active_node   = root;
-    ap->active_edge   = '\0';
+    ap->active_edge   = 0;
     ap->active_length = 0;
 
     return ap;
@@ -48,7 +48,7 @@ edge* create_edge(int from, int* to) {
 // Splits an edge based on the active point
 node* split_edge(active_point* ap, const char* string, char cc, int from, int* to) {
 
-    edge* current_edge = ap->active_node->outgoing_edges[ap->active_edge];
+    edge* current_edge = ap->active_node->outgoing_edges[string[ap->active_edge]];
     node* node1        = current_edge->end_node;
     node* node2        = create_internal_node();
 
@@ -69,32 +69,34 @@ node* split_edge(active_point* ap, const char* string, char cc, int from, int* t
 }
 
 
-void fix(active_point *ap) {
-    edge* current_edge = ap->active_node->outgoing_edges[ap->active_edge];
+void fix(active_point *ap, const char* string) {
+    edge* current_edge = ap->active_node->outgoing_edges[string[ap->active_edge]];
     int edge_length = *current_edge->to - current_edge->from + 1;
     if (ap->active_length == edge_length) {
-        ap->active_node = current_edge->end_node;
-        ap->active_edge = '\0';
+        ap->active_node   = current_edge->end_node;
         ap->active_length = 0;
     }
 }
 
-void fix2(active_point* ap, const char* string, edge* previous_edge) {
-    edge* current_edge = ap->active_node->outgoing_edges[ap->active_edge];
+void fix2(active_point* ap, const char* string) {
+    edge* current_edge = ap->active_node->outgoing_edges[string[ap->active_edge]];
     if (current_edge) {
         int edge_length = *current_edge->to - current_edge->from + 1;
         if (ap->active_length > edge_length) {
             ap->active_node = current_edge->end_node;
-            ap->active_edge = string[previous_edge->from + edge_length + 1];
+            ap->active_edge += edge_length;
             ap->active_length -= edge_length;
-            fix2(ap, string, ap->active_node->outgoing_edges[ap->active_edge]);
+            fix2(ap, string);
         } else if (ap->active_length == edge_length) {
             ap->active_node = current_edge->end_node;
-            ap->active_edge = '\0';
             ap->active_length = 0;
         }
     }
 
+
+}
+
+void traverse_down() {
 
 }
 
@@ -122,9 +124,9 @@ suffix_tree* create_suffix_tree(char* string) {
                 // When the active length is zero, we just add a leaf node to the active node
                 if (ap->active_node->outgoing_edges[cc] != 0) {
                     // If there exists an edge with the current character, update the active point
-                    ap->active_edge = cc;
+                    ap->active_edge = i;
                     ap->active_length++;
-                    fix(ap);
+                    fix(ap, string);
                     // We're done with the current character, go to the next
                     goto next;
                 } else {
@@ -142,13 +144,13 @@ suffix_tree* create_suffix_tree(char* string) {
                 }
             } else {
                 // Active length > 0: we end at the middle of an edge
-                edge* current_edge = ap->active_node->outgoing_edges[ap->active_edge];
+                edge* current_edge = ap->active_node->outgoing_edges[string[ap->active_edge]];
                 char  next_char    = string[current_edge->from + ap->active_length];
 
                 if (cc == next_char) {
                     // Current character exists on edge behind the active point
                     ap->active_length++;
-                    fix(ap);
+                    fix(ap, string);
                     // We're done with the current character, go to the next one
                     goto next;
                 } else {
@@ -171,13 +173,11 @@ suffix_tree* create_suffix_tree(char* string) {
                             ap->active_node = ap->active_node->suffix_link;
                     } else {
                         // Rule 1
-                        printf("%d, %d\n", remainder, ap->active_length);
                         ap->active_length--;
-                        ap->active_edge = string[i - remainder + 2];
-                        printf("%d, %c \n", i-remainder+2, ap->active_edge);
+                        ap->active_edge++;
                     }
 
-                    fix2(ap, string, current_edge);
+                    fix2(ap, string);
 
                     remainder--;
                 }

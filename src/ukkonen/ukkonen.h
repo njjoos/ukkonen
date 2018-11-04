@@ -17,7 +17,7 @@ typedef struct edge {
 
 typedef struct active_point {
     struct node* active_node;
-    char         active_edge;
+    int          active_edge;
     int          active_length;
 } active_point;
 

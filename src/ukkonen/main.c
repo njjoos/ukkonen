@@ -23,7 +23,7 @@ char* read_file() {
 
 int main() {
 
-    freopen("error.txt", "r", stdin);
+    freopen("minerva.txt", "r", stdin);
     char*        string = read_file();
     suffix_tree* st     = create_suffix_tree(string);
     print_suffix_tree(st);
