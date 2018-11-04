@@ -4,7 +4,7 @@
 
 char* read_file() {
 
-    int   c_size = 64;
+    int   c_size = 4096;
     char* buffer = malloc(sizeof(char) * c_size);
     int   length = 0;
     char c;
@@ -14,20 +14,20 @@ char* read_file() {
         if (length >= c_size) {
             buffer = realloc(buffer, sizeof(char) * (c_size *= 2));
         }
+
         buffer[length++] = c;
     }
-
-    printf("Read: %s \n", buffer);
 
     return buffer;
 }
 
 int main() {
 
-    char* string = read_file();
-    suffix_tree* st = create_suffix_tree(string);
+    freopen("error.txt", "r", stdin);
+    char*        string = read_file();
+    suffix_tree* st     = create_suffix_tree(string);
     print_suffix_tree(st);
-    // TODO: free suffix_tree if time over
     free(string);
+
     return 0;
 }
