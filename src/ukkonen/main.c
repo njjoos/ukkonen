@@ -23,7 +23,7 @@ char* read_file() {
 
 int main() {
 
-    freopen("bible.txt", "r", stdin);
+    freopen("test2.txt", "r", stdin);
     char*        string = read_file();
     suffix_tree* st     = create_suffix_tree(string);
     print_suffix_tree(st);

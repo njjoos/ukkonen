@@ -1,2 +1,5 @@
 .idea
-cmake-build-debug
+eerste_deadline.bash
+sources
+src/cmake-build-debug
+
