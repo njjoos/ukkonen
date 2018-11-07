@@ -4,7 +4,7 @@
 
 char* read_file() {
 
-    int   c_size = 4096;
+    int   c_size = 128;
     char* buffer = malloc(sizeof(char) * c_size);
     int   length = 0;
     char c;
@@ -23,7 +23,7 @@ char* read_file() {
 
 int main() {
 
-    freopen("minerva.txt", "r", stdin);
+    freopen("bible.txt", "r", stdin);
     char*        string = read_file();
     suffix_tree* st     = create_suffix_tree(string);
     print_suffix_tree(st);
