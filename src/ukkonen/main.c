@@ -23,10 +23,10 @@ char* read_file() {
 
 int main() {
 
-    freopen("test2.txt", "r", stdin);
-    char*        string = read_file();
-    suffix_tree* st     = create_suffix_tree(string);
-    print_suffix_tree(st);
+    freopen("minerva.txt", "r", stdin);
+    char* string = read_file();
+    node* root   = create_suffix_tree(string);
+    print_suffix_tree(root);
     free(string);
 
     return 0;

@@ -85,7 +85,7 @@ void traverse_down(active_point* ap, const char* string) {
 }
 
 // Create a suffix tree using Ukkonen's algorithm
-suffix_tree* create_suffix_tree(char* string) {
+node* create_suffix_tree(char* string) {
 
     int*          end_point  = malloc(sizeof(int));
     int           length     = (int) strlen(string);
@@ -135,7 +135,7 @@ suffix_tree* create_suffix_tree(char* string) {
                         ap->active_node->outgoing_edges[cc] = create_edge(i, end_point);
                         remainder--;
 
-                        // Speciaru Ruru
+                        // Rule 4
                         ap->active_node   = root;
                         ap->active_length = remainder - 1;
                         ap->active_edge   = i - remainder + 1;
@@ -170,6 +170,7 @@ suffix_tree* create_suffix_tree(char* string) {
                             if (ap->active_node->suffix_link)
                                 ap->active_node = ap->active_node->suffix_link;
                             else {
+                                // Rule 3, 4
                                 ap->active_node   = root;
                                 ap->active_length = remainder - 1;
                                 ap->active_edge   = i - remainder + 1;
@@ -186,11 +187,7 @@ suffix_tree* create_suffix_tree(char* string) {
         next: {};
     }
 
-    suffix_tree* st  = malloc(sizeof(suffix_tree));
-    st->root         = root;
-    st->string       = string;
-
-    return st;
+    return root;
 }
 
 // Apply the ids in a depth first search way
@@ -227,7 +224,7 @@ void print_node(node* n, int from, int to, int prev_depth, int curr_depth) {
 
             if (e != 0) {
                 char str_e[128];
-                sprintf(str_e, " %c:%d,%d-%d |", i, e->end_node->id, e->from, *e->to);
+                sprintf(str_e, " %d:%d,%d-%d |", i, e->end_node->id, e->from, *e->to);
                 strcat(str, str_e);
             }
         }
@@ -249,12 +246,12 @@ void print_node(node* n, int from, int to, int prev_depth, int curr_depth) {
 }
 
 // Main function for printing a suffix tree
-void print_suffix_tree(suffix_tree* tree) {
+void print_suffix_tree(node* root) {
 
     int* id = malloc(sizeof(int));
     *id     = 0;
 
-    apply_ids(tree->root, id);
-    print_node(tree->root, 0, 0, 0, 0);
+    apply_ids(root, id);
+    print_node(root, 0, 0, 0, 0);
     free(id);
 }
