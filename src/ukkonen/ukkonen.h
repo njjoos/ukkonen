@@ -1,6 +1,8 @@
 #ifndef SRC_UKKONEN_H
 #define SRC_UKKONEN_H
 
+#define ASCII_LENGTH 128
+
 struct edge;
 
 typedef struct node {

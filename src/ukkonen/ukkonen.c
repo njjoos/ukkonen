@@ -3,8 +3,6 @@
 #include <stdio.h>
 #include "ukkonen.h"
 
-#define ASCII_LENGTH 128
-
 // Creates a leaf node
 node* create_leaf_node() {
 
@@ -54,22 +52,30 @@ node* split_edge(active_point* ap, const char* string, char cc, int from, int* t
     node* node1        = current_edge->end_node;
     node* node2        = create_internal_node();
 
-    // Create new leaf node for new character
+    // Create new edge for new character
     node2->outgoing_edges[cc] = create_edge(from, to);
 
-    // Fix the rest
-    int  ex_from = current_edge->from + ap->active_length;
-    int* ex_to   = current_edge->to;
-    node2->outgoing_edges[string[ex_from]]           = create_edge(ex_from, ex_to);
-    node2->outgoing_edges[string[ex_from]]->end_node = node1;
+    // Fix latter part of previous edge
+    int   ex_from = current_edge->from + ap->active_length;
+    int*  ex_to   = current_edge->to;
+    edge* e_edge  = malloc(sizeof(edge));
 
+    e_edge->from     = ex_from;
+    e_edge->to       = ex_to;
+    e_edge->end_node = node1;
+
+    node2->outgoing_edges[string[ex_from]] = e_edge;
+
+    // Fix prior part of previous edge
     current_edge->to       = malloc(sizeof(int));
     *current_edge->to      = current_edge->from + ap->active_length - 1;
     current_edge->end_node = node2;
 
+    // Finally return the new internal node
     return node2;
 }
 
+// Traverses down the tree to avoid active lengths that are bigger than the lenght of the active edge
 void traverse_down(active_point* ap, const char* string) {
 
     edge* current_edge = ap->active_node->outgoing_edges[string[ap->active_edge]];
@@ -96,6 +102,7 @@ node* create_suffix_tree(char* string) {
     root->id = 0;
 
     for (int i = 0; i < length; i++) {
+
         *end_point          = i;
         node* previous_node = NULL;
         char  cc            = string[i]; // cc = current character
@@ -104,7 +111,6 @@ node* create_suffix_tree(char* string) {
         while (remainder > 0) {
 
             if (ap->active_length == 0) {
-
                 // When the active length is 0, we are adding from the root
                 if (root->outgoing_edges[cc] != 0) {
                     // If there exists an edge with the current character, update the active point
@@ -141,7 +147,6 @@ node* create_suffix_tree(char* string) {
                         ap->active_edge   = i - remainder + 1;
                     }
                 } else {
-
                     // When the active length > 0, we end at the middle of an edge
                     edge* current_edge = ap->active_node->outgoing_edges[string[ap->active_edge]];
                     char  next_char    = string[current_edge->from + ap->active_length];
@@ -175,12 +180,9 @@ node* create_suffix_tree(char* string) {
                                 ap->active_length = remainder - 1;
                                 ap->active_edge   = i - remainder + 1;
                             }
-
                         }
-
                     }
                 }
-
             }
         }
         // Do nothing, used to get out of while loop
@@ -195,6 +197,7 @@ void apply_ids(node* n, int* id) {
 
     // Depth first application of all the ids
     for (int i = 0; i < ASCII_LENGTH; i++) {
+
         edge* e = n->outgoing_edges[i];
 
         if (e != 0) {
@@ -214,12 +217,13 @@ void print_node(node* n, int from, int to, int prev_depth, int curr_depth) {
         // Internal node
         char str[2048];
 
-        // TODO: dynamic string length
         if (curr_depth == 0)
             sprintf(str, "%d @  -  = ", n->id);
         else
             sprintf(str, "%d @ %d-%d = ", n->id, from - prev_depth, to);
+
         for (int i = 0; i < ASCII_LENGTH; i++) {
+
             edge* e = n->outgoing_edges[i];
 
             if (e != 0) {
