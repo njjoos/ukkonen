@@ -30,6 +30,7 @@ void test_root_outgoing_edges(node* root, const char* string) {
 
 }
 
+// Helper function for counting the leaf nodes
 void count_leaf_nodes_helper(node *n, int *counter) {
 
     if (!n->outgoing_edges)
@@ -43,6 +44,7 @@ void count_leaf_nodes_helper(node *n, int *counter) {
     }
 }
 
+// Counts the leaf nodes of a given suffix tree
 int count_leaf_nodes(node* root) {
 
     int* counter = malloc(sizeof(int));
@@ -70,12 +72,15 @@ void test_leaf_nodes(node* root, const char* string) {
 
 }
 
+// Run all tests on a given string
 void test(char* string) {
+
     node* root = create_suffix_tree(string);
 
     printf("Testing the string: %s \n\n", string);
     print_suffix_tree(root);
     printf("\n");
+
     test_root_outgoing_edges(root, string);
     test_leaf_nodes(root, string);
 }

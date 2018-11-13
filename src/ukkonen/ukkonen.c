@@ -85,6 +85,8 @@ void traverse_down(active_point* ap, const char* string) {
         ap->active_node   =  current_edge->end_node;
         ap->active_length -= edge_length;
         ap->active_edge   += edge_length;
+
+        // It might be that the active length is still too large, call this function again
         if (ap->active_length > 0)
             traverse_down(ap, string);
     }
@@ -175,7 +177,7 @@ node* create_suffix_tree(char* string) {
                             if (ap->active_node->suffix_link)
                                 ap->active_node = ap->active_node->suffix_link;
                             else {
-                                // Rule 3, 4
+                                // Rule 4
                                 ap->active_node   = root;
                                 ap->active_length = remainder - 1;
                                 ap->active_edge   = i - remainder + 1;
@@ -214,12 +216,14 @@ void apply_ids(node* n, int* id) {
 void print_node(node* n, int from, int to, int prev_depth, int curr_depth) {
 
     if (n->outgoing_edges != NULL) {
-        // Internal node
+        // Print internal node
         char str[2048];
 
         if (curr_depth == 0)
+            // Root
             sprintf(str, "%d @  -  = ", n->id);
         else
+            // Other
             sprintf(str, "%d @ %d-%d = ", n->id, from - prev_depth, to);
 
         for (int i = 0; i < ASCII_LENGTH; i++) {
@@ -233,9 +237,11 @@ void print_node(node* n, int from, int to, int prev_depth, int curr_depth) {
             }
         }
 
+        // Replace the last '|' with a newline character
         str[strlen(str)-1] = '\n';
         printf(str);
 
+        // Call this function recursively on all child nodes
         for (int i = 0; i < ASCII_LENGTH; i++) {
             edge* e = n->outgoing_edges[i];
 
@@ -244,7 +250,7 @@ void print_node(node* n, int from, int to, int prev_depth, int curr_depth) {
             }
         }
     } else {
-        // Leaf node
+        // Print leaf node
         printf("%d @ %d-%d\n", n->id, from - prev_depth, to);
     }
 }
