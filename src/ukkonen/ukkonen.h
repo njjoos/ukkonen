@@ -24,7 +24,8 @@ typedef struct active_point {
 } active_point;
 
 
-node* create_suffix_tree(char*);
+node* create_suffix_tree(char*, int*);
 void  print_suffix_tree(node*);
+void  free_node(node*, int*);
 
 #endif //SRC_UKKONEN_H

@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include "util.h"
 
+// Check if character is in a string
 int is_in(const char* string, int length, char c) {
 
     for (int i = 0; i < length; i++) {
@@ -16,7 +17,9 @@ int is_in(const char* string, int length, char c) {
     return 0;
 }
 
+// Return the amount of unique characters in a string
 int unique_chars(const char* string) {
+
     int   c_size = 128;
     char* buffer = malloc(sizeof(char) * c_size);
     int   length = 0;

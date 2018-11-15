@@ -28,7 +28,7 @@ active_point* create_and_init_active_point(node* root) {
 
     active_point* ap  = malloc(sizeof(active_point));
     ap->active_node   = root;
-    ap->active_edge   = '\0';
+    ap->active_edge   = 0;
     ap->active_length = 0;
 
     return ap;
@@ -93,9 +93,8 @@ void traverse_down(active_point* ap, const char* string) {
 }
 
 // Create a suffix tree using Ukkonen's algorithm
-node* create_suffix_tree(char* string) {
+node* create_suffix_tree(char* string, int* end_point) {
 
-    int*          end_point  = malloc(sizeof(int));
     int           length     = (int) strlen(string);
     node*         root       = create_internal_node();
     active_point* ap         = create_and_init_active_point(root);
@@ -119,7 +118,7 @@ node* create_suffix_tree(char* string) {
                     ap->active_edge   = i;
                     ap->active_length = 1;
                     // We're done with the current character, go to the next
-                    goto next;
+                    break;
                 } else {
                     // There is no edge, create one with the current character
                     root->outgoing_edges[cc] = create_edge(i, end_point);
@@ -131,13 +130,14 @@ node* create_suffix_tree(char* string) {
                 traverse_down(ap, string);
 
                 if (ap->active_length == 0) {
-                    // When the active length is 0 after traversing, we check if edge exists
+                    // When the active length is 0 after traversing, we practically do the same as with root
+                    // except that we need to apply Rule 4 when we create a new leaf node
                     if (ap->active_node->outgoing_edges[cc] != 0) {
                         // If there exists an edge with the current character, update the active point
                         ap->active_edge   = i;
                         ap->active_length = 1;
                         // We're done with the current character, go to the next
-                        goto next;
+                        break;
                     } else {
                         // There is no edge, create one with the current character
                         ap->active_node->outgoing_edges[cc] = create_edge(i, end_point);
@@ -156,8 +156,7 @@ node* create_suffix_tree(char* string) {
                     if (cc == next_char) {
                         // Update active point
                         ap->active_length++;
-                        // Done
-                        goto next;
+                        break;
                     } else {
                         // Split edge
                         node* new_node = split_edge(ap, string, cc, i, end_point);
@@ -187,8 +186,6 @@ node* create_suffix_tree(char* string) {
                 }
             }
         }
-        // Do nothing, used to get out of while loop
-        next: {};
     }
 
     return root;
@@ -264,4 +261,30 @@ void print_suffix_tree(node* root) {
     apply_ids(root, id);
     print_node(root, 0, 0, 0, 0);
     free(id);
+}
+
+// Free a given node
+void free_node(node* n, int* end_point) {
+
+    if (n->outgoing_edges) {
+        // Internal node
+        for (int i = 0; i < ASCII_LENGTH; i++) {
+            edge* e = n->outgoing_edges[i];
+            if (e != 0) {
+                // First free the node at the end of the edge
+                free_node(e->end_node, end_point);
+                if (e->to != end_point)
+                    // Free end point of current edge
+                    free(e->to);
+                // Free edge
+                free(e);
+            }
+        }
+
+        // Free the outgoing edges
+        free(n->outgoing_edges);
+    }
+
+    // Free node
+    free(n);
 }

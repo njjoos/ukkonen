@@ -27,7 +27,6 @@ void test_root_outgoing_edges(node* root, const char* string) {
         printf("  Test passed.\n");
     else
         printf("  Test failed.\n");
-
 }
 
 // Helper function for counting the leaf nodes
@@ -69,13 +68,13 @@ void test_leaf_nodes(node* root, const char* string) {
         printf("  Test passed.\n\n");
     else
         printf("  Test failed.\n\n");
-
 }
 
 // Run all tests on a given string
 void test(char* string) {
 
-    node* root = create_suffix_tree(string);
+    int*  ep   = malloc(sizeof(int));
+    node* root = create_suffix_tree(string, ep);
 
     printf("Testing the string: %s \n\n", string);
     print_suffix_tree(root);
@@ -83,6 +82,9 @@ void test(char* string) {
 
     test_root_outgoing_edges(root, string);
     test_leaf_nodes(root, string);
+
+    free_node(root, ep);
+    free(ep);
 }
 
 int main() {

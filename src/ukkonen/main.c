@@ -23,11 +23,14 @@ char* read_file() {
 
 int main() {
 
-    //freopen("test2.txt", "r", stdin);
-    char* string = read_file();
-    node* root   = create_suffix_tree(string);
+    char* s         = read_file();
+    int*  end_point = malloc(sizeof(int));
+    node* root      = create_suffix_tree(s, end_point);
+
     print_suffix_tree(root);
-    free(string);
+    free_node(root, end_point);
+    free(end_point);
+    free(s);
 
     return 0;
 }
