@@ -18,6 +18,7 @@ char* read_file() {
         buffer[length++] = c;
     }
 
+    fclose(stdin);
     return buffer;
 }
 
