@@ -180,7 +180,7 @@ void add_to_suffix_tree(node* root, active_point* ap, int* remainder, char* curr
 }
 
 // Create a suffix tree using Ukkonen's algorithm
-node* create_suffix_tree_from_stream(FILE *stream, int *end_point) {
+suffix_tree* create_suffix_tree_from_stream(FILE *stream, int *end_point) {
 
     // String allocation
     int   c_size = 256;
@@ -198,7 +198,7 @@ node* create_suffix_tree_from_stream(FILE *stream, int *end_point) {
 
     while ((c = (char) fgetc(stream)) != EOF) {
 
-        if (length >= c_size) {
+        if (length == c_size) {
             buffer = realloc(buffer, sizeof(char) * (c_size *= 2));
         }
 
@@ -209,9 +209,13 @@ node* create_suffix_tree_from_stream(FILE *stream, int *end_point) {
 
     free(ap);
     free(remainder);
-    free(buffer);
 
-    return root;
+    suffix_tree* sf = malloc(sizeof(suffix_tree));
+
+    sf->root   = root;
+    sf->string = buffer;
+
+    return sf;
 }
 
 // Print a node in a DFS way
