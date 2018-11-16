@@ -183,7 +183,7 @@ void add_to_suffix_tree(node* root, active_point* ap, int* remainder, char* curr
 node* create_suffix_tree_from_stream(FILE *stream, int *end_point) {
 
     // String allocation
-    int   c_size = 128;
+    int   c_size = 256;
     char* buffer = malloc(sizeof(char) * c_size);
     int   length = 0;
     char  c;
@@ -228,30 +228,29 @@ void print_node(node *n, int *id, int from, int to, int prev_depth, int curr_dep
             }
         }
 
-        char str[2048];
-
         if (curr_depth == 0)
             // Root
-            sprintf(str, "%d @  -  = ", n->id);
+            printf("%d @  -  = ", n->id);
         else
             // Other
-            sprintf(str, "%d @ %d-%d = ", n->id, from - prev_depth, to);
+            printf("%d @ %d-%d = ", n->id, from - prev_depth, to);
+
+        int children = 0;
 
         for (int i = 0; i < ASCII_LENGTH; i++) {
 
             edge* e = n->outgoing_edges[i];
 
             if (e != 0) {
-                char str_e[128];
-                sprintf(str_e, " %d:%d,%d-%d |", i, e->end_node->id, e->from, *e->to);
-                strcat(str, str_e);
+
+                if (children++)
+                    printf("| %d:%d,%d-%d ", i, e->end_node->id, e->from, *e->to);
+                else
+                    printf("%d:%d,%d-%d ", i, e->end_node->id, e->from, *e->to);
             }
         }
 
-        // Replace the last '|' with a newline character
-        str[strlen(str)-1] = '\n';
-        printf(str);
-
+        printf("\n");
 
     } else {
         // Leaf node
