@@ -191,29 +191,20 @@ node* create_suffix_tree(char* string, int* end_point) {
     return root;
 }
 
-// Apply the ids in a depth first search way
-void apply_ids(node* n, int* id) {
+// Print a node in a DFS way
+void print_node(node *n, int *id, int from, int to, int prev_depth, int curr_depth) {
 
-    // Depth first application of all the ids
-    for (int i = 0; i < ASCII_LENGTH; i++) {
+    if (n->outgoing_edges) {
+        // Internal node
+        for (int i = 0; i < ASCII_LENGTH; i++) {
+            edge* e = n->outgoing_edges[i];
 
-        edge* e = n->outgoing_edges[i];
-
-        if (e != 0) {
-            e->end_node->id = ++(*id);
-
-            if (e->end_node->outgoing_edges != NULL) {
-                apply_ids(e->end_node, id);
+            if (e != 0) {
+                e->end_node->id = ++(*id);
+                print_node(e->end_node, id, e->from, *e->to, curr_depth, curr_depth + (*e->to - e->from) + 1);
             }
         }
-    }
-}
 
-// Recursive function that prints a node
-void print_node(node* n, int from, int to, int prev_depth, int curr_depth) {
-
-    if (n->outgoing_edges != NULL) {
-        // Print internal node
         char str[2048];
 
         if (curr_depth == 0)
@@ -238,16 +229,9 @@ void print_node(node* n, int from, int to, int prev_depth, int curr_depth) {
         str[strlen(str)-1] = '\n';
         printf(str);
 
-        // Call this function recursively on all child nodes
-        for (int i = 0; i < ASCII_LENGTH; i++) {
-            edge* e = n->outgoing_edges[i];
 
-            if (e != 0) {
-                print_node(e->end_node, e->from, *e->to, curr_depth, curr_depth + (*e->to - e->from) + 1);
-            }
-        }
     } else {
-        // Print leaf node
+        // Leaf node
         printf("%d @ %d-%d\n", n->id, from - prev_depth, to);
     }
 }
@@ -258,8 +242,7 @@ void print_suffix_tree(node* root) {
     int* id = malloc(sizeof(int));
     *id     = 0;
 
-    apply_ids(root, id);
-    print_node(root, 0, 0, 0, 0);
+    print_node(root, id, 0, 0, 0, 0);
     free(id);
 }
 
