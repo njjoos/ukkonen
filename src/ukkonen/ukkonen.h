@@ -24,7 +24,7 @@ typedef struct active_point {
 } active_point;
 
 
-node* create_suffix_tree(char*, int*);
+node* create_suffix_tree_from_stream(FILE *, int *);
 void  print_suffix_tree(node*);
 void  free_node(node*, int*);
 

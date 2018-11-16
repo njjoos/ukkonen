@@ -74,7 +74,7 @@ void test_leaf_nodes(node* root, const char* string) {
 void test(char* string) {
 
     int*  ep   = malloc(sizeof(int));
-    node* root = create_suffix_tree(string, ep);
+    node* root = create_suffix_tree_from_stream(string, ep);
 
     printf("Testing the string: %s \n\n", string);
     print_suffix_tree(root);

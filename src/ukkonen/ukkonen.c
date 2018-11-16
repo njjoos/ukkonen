@@ -92,101 +92,124 @@ void traverse_down(active_point* ap, const char* string) {
     }
 }
 
-// Create a suffix tree using Ukkonen's algorithm
-node* create_suffix_tree(char* string, int* end_point) {
+void add_to_suffix_tree(node* root, active_point* ap, int* remainder, char* curr_string,
+                        int* end_point, int curr_length) {
 
-    int           length     = (int) strlen(string);
-    node*         root       = create_internal_node();
-    active_point* ap         = create_and_init_active_point(root);
-    int           remainder  = 0;
+    *end_point          = curr_length;
+    node* previous_node = NULL;
+    char  cc            = curr_string[curr_length]; // cc = current character
+    (*remainder)++;
 
-    root->id = 0;
+    while (*remainder > 0) {
 
-    for (int i = 0; i < length; i++) {
-
-        *end_point          = i;
-        node* previous_node = NULL;
-        char  cc            = string[i]; // cc = current character
-        remainder++;
-
-        while (remainder > 0) {
+        if (ap->active_length == 0) {
+            // When the active length is 0, we are adding from the root
+            if (root->outgoing_edges[cc] != 0) {
+                // If there exists an edge with the current character, update the active point
+                ap->active_edge   = curr_length;
+                ap->active_length = 1;
+                // We're done with the current character, go to the next
+                break;
+            } else {
+                // There is no edge, create one with the current character
+                root->outgoing_edges[cc] = create_edge(curr_length, end_point);
+                (*remainder)--;
+            }
+        } else {
+            // Active length > 0: we end at the middle of an edge
+            // Traverse down the tree, this is needed when active length >= current edge length
+            traverse_down(ap, curr_string);
 
             if (ap->active_length == 0) {
-                // When the active length is 0, we are adding from the root
-                if (root->outgoing_edges[cc] != 0) {
+                // When the active length is 0 after traversing, we practically do the same as with root
+                // except that we need to apply Rule 4 when we create a new leaf node
+                if (ap->active_node->outgoing_edges[cc] != 0) {
                     // If there exists an edge with the current character, update the active point
-                    ap->active_edge   = i;
+                    ap->active_edge   = curr_length;
                     ap->active_length = 1;
                     // We're done with the current character, go to the next
                     break;
                 } else {
                     // There is no edge, create one with the current character
-                    root->outgoing_edges[cc] = create_edge(i, end_point);
-                    remainder--;
+                    ap->active_node->outgoing_edges[cc] = create_edge(curr_length, end_point);
+                    (*remainder)--;
+
+                    // Rule 4
+                    ap->active_node   = root;
+                    ap->active_length = *remainder - 1;
+                    ap->active_edge   = curr_length - *remainder + 1;
                 }
             } else {
-                // Active length > 0: we end at the middle of an edge
-                // Traverse down the tree, this is needed when active length >= current edge length
-                traverse_down(ap, string);
+                // When the active length > 0, we end at the middle of an edge
+                edge* current_edge = ap->active_node->outgoing_edges[curr_string[ap->active_edge]];
+                char  next_char    = curr_string[current_edge->from + ap->active_length];
 
-                if (ap->active_length == 0) {
-                    // When the active length is 0 after traversing, we practically do the same as with root
-                    // except that we need to apply Rule 4 when we create a new leaf node
-                    if (ap->active_node->outgoing_edges[cc] != 0) {
-                        // If there exists an edge with the current character, update the active point
-                        ap->active_edge   = i;
-                        ap->active_length = 1;
-                        // We're done with the current character, go to the next
-                        break;
-                    } else {
-                        // There is no edge, create one with the current character
-                        ap->active_node->outgoing_edges[cc] = create_edge(i, end_point);
-                        remainder--;
-
-                        // Rule 4
-                        ap->active_node   = root;
-                        ap->active_length = remainder - 1;
-                        ap->active_edge   = i - remainder + 1;
-                    }
+                if (cc == next_char) {
+                    // Update active point
+                    ap->active_length++;
+                    break;
                 } else {
-                    // When the active length > 0, we end at the middle of an edge
-                    edge* current_edge = ap->active_node->outgoing_edges[string[ap->active_edge]];
-                    char  next_char    = string[current_edge->from + ap->active_length];
+                    // Split edge
+                    node* new_node = split_edge(ap, curr_string, cc, curr_length, end_point);
+                    (*remainder)--;
 
-                    if (cc == next_char) {
-                        // Update active point
-                        ap->active_length++;
-                        break;
+                    // Rule 2
+                    if (previous_node)
+                        previous_node->suffix_link = new_node;
+                    previous_node = new_node;
+
+                    if (ap->active_node == root) {
+                        // Rule 1
+                        ap->active_length--;
+                        ap->active_edge++;
                     } else {
-                        // Split edge
-                        node* new_node = split_edge(ap, string, cc, i, end_point);
-                        remainder--;
-
-                        // Rule 2
-                        if (previous_node)
-                            previous_node->suffix_link = new_node;
-                        previous_node = new_node;
-
-                        if (ap->active_node == root) {
-                            // Rule 1
-                            ap->active_length--;
-                            ap->active_edge++;
-                        } else {
-                            // Rule 3
-                            if (ap->active_node->suffix_link)
-                                ap->active_node = ap->active_node->suffix_link;
-                            else {
-                                // Rule 4
-                                ap->active_node   = root;
-                                ap->active_length = remainder - 1;
-                                ap->active_edge   = i - remainder + 1;
-                            }
+                        // Rule 3
+                        if (ap->active_node->suffix_link)
+                            ap->active_node = ap->active_node->suffix_link;
+                        else {
+                            // Rule 4
+                            ap->active_node   = root;
+                            ap->active_length = *remainder - 1;
+                            ap->active_edge   = curr_length - *remainder + 1;
                         }
                     }
                 }
             }
         }
     }
+}
+
+// Create a suffix tree using Ukkonen's algorithm
+node* create_suffix_tree_from_stream(FILE *stream, int *end_point) {
+
+    // String allocation
+    int   c_size = 128;
+    char* buffer = malloc(sizeof(char) * c_size);
+    int   length = 0;
+    char  c;
+
+    // Tree allocation
+    node*         root       = create_internal_node();
+    active_point* ap         = create_and_init_active_point(root);
+    int*          remainder  = malloc(sizeof(int));
+
+    *remainder = 0;
+    root->id   = 0;
+
+    while ((c = (char) fgetc(stream)) != EOF) {
+
+        if (length >= c_size) {
+            buffer = realloc(buffer, sizeof(char) * (c_size *= 2));
+        }
+
+        buffer[length] = c;
+
+        add_to_suffix_tree(root, ap, remainder, buffer, end_point, length++);
+    }
+
+    free(ap);
+    free(remainder);
+    free(buffer);
 
     return root;
 }
