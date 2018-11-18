@@ -5,7 +5,7 @@
 int main() {
 
     int* end_point = malloc(sizeof(int));
-    *end_point = 0;
+    *end_point     = 0;
 
     suffix_tree* sf = create_suffix_tree_from_stream(stdin, end_point);
     print_suffix_tree(sf->root);
