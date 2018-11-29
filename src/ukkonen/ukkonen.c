@@ -35,25 +35,27 @@ active_point* create_and_init_active_point(node* root) {
 }
 
 // Creates an edge
-edge* create_edge(int from, int* to) {
+edge* create_edge(int from, int* to, int beg) {
 
-    edge* e     = malloc(sizeof(edge));
-    e->end_node = create_leaf_node();
-    e->from     = from;
-    e->to       = to;
+    edge* e        = malloc(sizeof(edge));
+    node* end_node = create_leaf_node();
+    end_node->beg  = beg;
+    e->end_node    = end_node;
+    e->from        = from;
+    e->to          = to;
 
     return e;
 }
 
 // Splits an edge based on the active point
-node* split_edge(active_point* ap, const char* string, char cc, int from, int* to) {
+node* split_edge(active_point* ap, const char* string, char cc, int from, int* to, int* remainder) {
 
     edge* current_edge = ap->active_node->outgoing_edges[(unsigned) string[ap->active_edge]];
     node* node1        = current_edge->end_node;
     node* node2        = create_internal_node();
 
     // Create new edge for new character
-    node2->outgoing_edges[(unsigned) cc] = create_edge(from, to);
+    node2->outgoing_edges[(unsigned) cc] = create_edge(from, to, from - *remainder + 1);
 
     // Fix latter part of previous edge
     int   ex_from = current_edge->from + ap->active_length;
@@ -65,6 +67,7 @@ node* split_edge(active_point* ap, const char* string, char cc, int from, int* t
     e_edge->end_node = node1;
 
     node2->outgoing_edges[(unsigned) string[ex_from]] = e_edge;
+    node2->beg = node1->beg;
 
     // Fix prior part of previous edge
     current_edge->to       = malloc(sizeof(int));
@@ -75,7 +78,7 @@ node* split_edge(active_point* ap, const char* string, char cc, int from, int* t
     return node2;
 }
 
-// Traverses down the tree to avoid active lengths that are bigger than the lenght of the active edge
+// Traverses down the tree to avoid active lengths that are bigger than the length of the active edge
 void traverse_down(active_point* ap, const char* string) {
 
     edge* current_edge = ap->active_node->outgoing_edges[(unsigned) string[ap->active_edge]];
@@ -112,8 +115,9 @@ void add_to_suffix_tree(node* root, active_point* ap, int* remainder, char* curr
                 break;
             } else {
                 // There is no edge, create one with the current character
-                root->outgoing_edges[(unsigned) cc] = create_edge(curr_length, end_point);
                 (*remainder)--;
+                root->outgoing_edges[(unsigned) cc] = create_edge(curr_length, end_point, curr_length - *remainder);
+
             }
         } else {
             // Active length > 0: we end at the middle of an edge
@@ -131,8 +135,9 @@ void add_to_suffix_tree(node* root, active_point* ap, int* remainder, char* curr
                     break;
                 } else {
                     // There is no edge, create one with the current character
-                    ap->active_node->outgoing_edges[(unsigned) cc] = create_edge(curr_length, end_point);
                     (*remainder)--;
+                    ap->active_node->outgoing_edges[(unsigned) cc] = create_edge(curr_length, end_point,
+                            curr_length - *remainder);
 
                     // Rule 4
                     ap->active_node   = root;
@@ -150,7 +155,7 @@ void add_to_suffix_tree(node* root, active_point* ap, int* remainder, char* curr
                     break;
                 } else {
                     // Split edge
-                    node* new_node = split_edge(ap, curr_string, cc, curr_length, end_point);
+                    node* new_node = split_edge(ap, curr_string, cc, curr_length, end_point, remainder);
                     (*remainder)--;
 
                     // Rule 2
@@ -195,6 +200,7 @@ suffix_tree* create_suffix_tree_from_stream(FILE *stream, int *end_point) {
 
     *remainder = 0;
     root->id   = 0;
+    root->beg  = 0;
 
     while ((c = (char) fgetc(stream)) != EOF) {
 
@@ -233,10 +239,10 @@ void print_node(node *n, int *id, int from, int to, int prev_depth, int curr_dep
 
         if (curr_depth == 0)
             // Root
-            printf("%d @  -  = ", n->id);
+            printf("[%d] %d @  -  = ", n->beg, n->id);
         else
             // Other
-            printf("%d @ %d-%d = ", n->id, from - prev_depth, to);
+            printf("[%d] %d @ %d-%d = ", n->beg, n->id, from - prev_depth, to);
 
         int children = 0;
 
@@ -257,7 +263,7 @@ void print_node(node *n, int *id, int from, int to, int prev_depth, int curr_dep
 
     } else {
         // Leaf node
-        printf("%d @ %d-%d\n", n->id, from - prev_depth, to);
+        printf("[%d] %d @ %d-%d\n",n->beg, n->id, from - prev_depth, to);
     }
 }
 

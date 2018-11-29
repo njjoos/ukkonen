@@ -9,6 +9,7 @@ typedef struct node {
     struct edge** outgoing_edges;
     struct node*  suffix_link;
     int           id;
+    int           beg;
 } node;
 
 typedef struct edge {
@@ -29,8 +30,11 @@ typedef struct suffix_tree {
 } suffix_tree;
 
 
-suffix_tree* create_suffix_tree_from_stream(FILE *, int *);
-void         print_suffix_tree(node*);
-void         free_node(node*, int*);
+node*         create_internal_node();
+active_point* create_and_init_active_point(node*);
+void          add_to_suffix_tree(node*, active_point*, int*, char*, int*, int);
+suffix_tree*  create_suffix_tree_from_stream(FILE *, int *);
+void          print_suffix_tree(node*);
+void          free_node(node*, int*);
 
 #endif //SRC_UKKONEN_H
