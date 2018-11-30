@@ -4,8 +4,6 @@
 
 int main(int argc, char** argv) {
 
-    //freopen("bible.txt", "r", stdin);
-
     int c = 0;
     int d = 0;
     int o = 0;
@@ -19,13 +17,13 @@ int main(int argc, char** argv) {
             o = 1;
         else if (!strcmp("-c", argv[i])) {
             if (d == 1) {
-                printf("Error: can't compress and decompress.\n");
+                printf("Error: can't compress and decompress at the same time.\n");
                 return 1;
             } else
                 c = 1;
         } else if (!strcmp("-d", argv[i])) {
             if (c == 1) {
-                printf("Error: can't compress and decompress.\n");
+                printf("Error: can't compress and decompress at the same time.\n");
                 return 1;
             } else
                 d = 1;
@@ -36,10 +34,10 @@ int main(int argc, char** argv) {
     }
 
     if (c)
-        compress(stdin, o);
+        compress(stdin, stdout, o);
 
     if (d)
-        decompress(stdin, o);
+        decompress(stdin, stdout, o);
 
     return 0;
 }

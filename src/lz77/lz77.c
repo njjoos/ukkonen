@@ -5,6 +5,8 @@
 
 #define SIZE 9
 #define MAX_LENGTH 1000000
+#define START_SIZE 65536 // 2^16
+#define BLAND_CHAR (uint8_t) ~0 // = 255
 //#define TEST
 
 // Checks if we reached the end of an edge and updates the status
@@ -70,10 +72,10 @@ void reset_match_state(match_state* ms, node* root) {
 
 
 // Compresses the contents of a file stream
-void compress(FILE* stream, int optimized) {
+void compress(FILE* i_stream, FILE* o_stream, int optimized) {
 
     // String allocation
-    int   c_size = 256;
+    int   c_size = START_SIZE;
     char* buffer = malloc(sizeof(char) * c_size);
     int   length = 0;
     char  c;
@@ -91,16 +93,16 @@ void compress(FILE* stream, int optimized) {
     match_state ms;
     reset_match_state(&ms, root);
 
-    while ((c = (char) fgetc(stream)) != EOF) {
+    while ((c = (char) fgetc(i_stream)) != EOF) {
 
         // Optimized memory usage
         if (optimized && length >= MAX_LENGTH) {
 
             // First print out what we currently have with a unique character at the end
             // (uint8_t) ~0 = 255
-            output o = {ms.pos, ms.len, (uint8_t) ~0};
+            output o = {ms.pos, ms.len, BLAND_CHAR};
             #ifndef TEST
-            fwrite(&o, SIZE, 1, stdout);
+            fwrite(&o, SIZE, 1, o_stream);
             #else
             printf("%d %d [%d] \n", o.p, o.l, o.c);
             #endif
@@ -111,7 +113,7 @@ void compress(FILE* stream, int optimized) {
             free(ap);
 
             // Reset everything
-            c_size = 256;
+            c_size = START_SIZE;
             buffer = malloc(sizeof(char) * c_size);
             length = 0;
 
@@ -139,7 +141,7 @@ void compress(FILE* stream, int optimized) {
             // There was no match, we print
             output o = {ms.pos, ms.len, (uint8_t) c};
             #ifndef TEST
-            fwrite(&o, SIZE, 1, stdout);
+            fwrite(&o, SIZE, 1, o_stream);
             #else
             printf("%d %d %c \n", o.p, o.l, o.c);
             #endif
@@ -150,11 +152,12 @@ void compress(FILE* stream, int optimized) {
 
     }
 
+    // Finally apply the find_match with the null character
     find_match(buffer, '\0', &ms);
 
     output o = {ms.pos, ms.len, (uint8_t) '\0'};
     #ifndef TEST
-    fwrite(&o, SIZE, 1, stdout);
+    fwrite(&o, SIZE, 1, o_stream);
     #else
     printf("%d %d [%d] \n", o.p, o.l, o.c);
     #endif
@@ -164,15 +167,15 @@ void compress(FILE* stream, int optimized) {
 }
 
 // Decompresses
-void decompress(FILE* stream, int optimized) {
+void decompress(FILE* i_stream, FILE* o_stream, int optimized) {
 
-    int   c_size = 256;
+    int   c_size = START_SIZE;
     char* buffer = malloc(sizeof(char) * c_size);
     int   length = 0;
 
     output o;
 
-    while (fread(&o, SIZE, 1, stream)) {
+    while (fread(&o, SIZE, 1, i_stream)) {
 
         // It might be that o.l is way bigger than c_size (e.g. o.l = 10000, c_size = 256)
         // but this will never because o.l is always smaller than c_size as o.l is the length of a
@@ -187,17 +190,21 @@ void decompress(FILE* stream, int optimized) {
             buffer[length++] = buffer[i];
         }
 
-        if (optimized && o.c == (uint8_t) ~0) {
-            fwrite(buffer, sizeof(char), (size_t) length, stdout);
+        if (optimized && o.c == BLAND_CHAR) {
+            // When we optimized memory usage, we had to enter a special character which simply had
+            // the value 255, whenever we find this character it means that we had to reset everything.
+            // So here we also reset everything so correspond with the compression.
+            fwrite(buffer, sizeof(char), (size_t) length, o_stream);
             free(buffer);
 
-            c_size = 256;
+            c_size = START_SIZE;
             buffer = malloc(sizeof(char) * c_size);
             length = 0;
         } else
+            // This has to be in the else block because we don't want to output the character 255
             buffer[length++] = (char) o.c;
     }
 
-    fwrite(buffer, sizeof(char), (size_t) length-1, stdout);
+    fwrite(buffer, sizeof(char), (size_t) length-1, o_stream);
 
 }

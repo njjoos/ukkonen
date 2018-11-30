@@ -137,7 +137,7 @@ void test(char* file_name) {
     fclose(fp);
 }
 
-int main(int argc, char* argv[]) {
+int main(int argc, char** argv) {
 
     printf("--------------------\n");
     printf("TEST PROGRAM UKKONEN\n");
