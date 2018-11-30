@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <memory.h>
+#include <string.h>
 #include <stdlib.h>
 #include "../../src/ukkonen/ukkonen.h"
 #include "../util.h"

@@ -239,10 +239,10 @@ void print_node(node *n, int *id, int from, int to, int prev_depth, int curr_dep
 
         if (curr_depth == 0)
             // Root
-            printf("[%d] %d @  -  = ", n->beg, n->id);
+            printf("%d @  -  = ", n->id);
         else
             // Other
-            printf("[%d] %d @ %d-%d = ", n->beg, n->id, from - prev_depth, to);
+            printf("%d @ %d-%d = ", n->id, from - prev_depth, to);
 
         int children = 0;
 
@@ -263,7 +263,7 @@ void print_node(node *n, int *id, int from, int to, int prev_depth, int curr_dep
 
     } else {
         // Leaf node
-        printf("[%d] %d @ %d-%d\n",n->beg, n->id, from - prev_depth, to);
+        printf("%d @ %d-%d\n", n->id, from - prev_depth, to);
     }
 }
 

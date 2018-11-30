@@ -4,7 +4,7 @@
 
 int main(int argc, char** argv) {
 
-    //freopen("minerva.txt", "r", stdin);
+    //freopen("bible.txt", "r", stdin);
 
     int c = 0;
     int d = 0;
@@ -36,10 +36,10 @@ int main(int argc, char** argv) {
     }
 
     if (c)
-        compress(stdin);
+        compress(stdin, o);
 
     if (d)
-        decompress(stdin);
+        decompress(stdin, o);
 
     return 0;
 }

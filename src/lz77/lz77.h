@@ -20,7 +20,7 @@ typedef struct match_state {
     int          state; // 1: No match | 0: Match
 } match_state;
 
-void compress(FILE*);
-void decompress(FILE*);
+void compress(FILE*, int);
+void decompress(FILE*, int);
 
 #endif //SRC_LZ77_H
