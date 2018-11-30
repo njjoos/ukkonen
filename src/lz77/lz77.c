@@ -3,11 +3,11 @@
 #include "lz77.h"
 #include "../ukkonen/ukkonen.h"
 
-#define SIZE 9
 #define MAX_LENGTH 1000000
 #define START_SIZE 65536 // 2^16
 #define BLAND_CHAR (uint8_t) ~0 // = 255
-//#define TEST
+#define SIZE 9
+// #define TEST // Used for testing
 
 // Checks if we reached the end of an edge and updates the status
 void check_edge_length(match_state* ms) {
@@ -69,8 +69,6 @@ void reset_match_state(match_state* ms, node* root) {
     ms->state  = 0;
 }
 
-
-
 // Compresses the contents of a file stream
 void compress(FILE* i_stream, FILE* o_stream, int optimized) {
 
@@ -95,37 +93,41 @@ void compress(FILE* i_stream, FILE* o_stream, int optimized) {
 
     while ((c = (char) fgetc(i_stream)) != EOF) {
 
-        // Optimized memory usage
-        if (optimized && length >= MAX_LENGTH) {
+        if (length >= MAX_LENGTH) {
+            if (optimized) {
+                // First print out what we currently have with a unique character at the end
+                // (uint8_t) ~0 = 255
+                output o = {ms.pos, ms.len, BLAND_CHAR};
+                #ifndef TEST
+                fwrite(&o, SIZE, 1, o_stream);
+                #else
+                printf("%d %d [%d] \n", o.p, o.l, o.c);
+                #endif
 
-            // First print out what we currently have with a unique character at the end
-            // (uint8_t) ~0 = 255
-            output o = {ms.pos, ms.len, BLAND_CHAR};
-            #ifndef TEST
-            fwrite(&o, SIZE, 1, o_stream);
-            #else
-            printf("%d %d [%d] \n", o.p, o.l, o.c);
-            #endif
+                // Free
+                free(buffer);
+                free_node(root, &end_point);
+                free(ap);
 
-            // Free
-            free(buffer);
-            free_node(root, &end_point);
-            free(ap);
+                // Reset everything
+                c_size = START_SIZE;
+                buffer = malloc(sizeof(char) * c_size);
+                length = 0;
 
-            // Reset everything
-            c_size = START_SIZE;
-            buffer = malloc(sizeof(char) * c_size);
-            length = 0;
+                root       = create_internal_node();
+                ap         = create_and_init_active_point(root);
+                remainder  = 0;
+                end_point  = 0;
 
-            root       = create_internal_node();
-            ap         = create_and_init_active_point(root);
-            remainder  = 0;
-            end_point  = 0;
+                root->id   = 0;
+                root->beg  = 0;
 
-            root->id   = 0;
-            root->beg  = 0;
-
-            reset_match_state(&ms, root);
+                reset_match_state(&ms, root);
+            } else {
+                fprintf(stderr, "The file is too big to use with normal compression.\n");
+                fprintf(stderr, "Use the -o flag to use the memory optimized version.\n");
+                exit(1);
+            }
         }
 
         if (length == c_size)
@@ -206,5 +208,4 @@ void decompress(FILE* i_stream, FILE* o_stream, int optimized) {
     }
 
     fwrite(buffer, sizeof(char), (size_t) length-1, o_stream);
-
 }
