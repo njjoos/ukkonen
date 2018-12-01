@@ -8,7 +8,6 @@
 #define START_SIZE  65536 // 2^16
 #define OUTPUT_SIZE 9
 
-
 // Checks if we reached the end of an edge and updates the status
 void check_edge_length(match_state* ms) {
 
@@ -96,6 +95,7 @@ void compress(FILE* i_stream, FILE* o_stream, int optimized) {
         if (length >= MAX_LENGTH) {
             if (optimized) {
                 // First print out what we currently have with a unique character at the end
+                // We call this unique character BLAND_CHAR which has the same value as EOF
                 output o = {ms.pos, ms.len, BLAND_CHAR};
                 fwrite(&o, OUTPUT_SIZE, 1, o_stream);
 
@@ -119,6 +119,8 @@ void compress(FILE* i_stream, FILE* o_stream, int optimized) {
 
                 reset_match_state(&ms, root);
             } else {
+                // When the file is "too big" we say that the user has to use the -o flag
+                // in order to avoid memory problems. We send this to stderr.
                 fprintf(stderr, "The file is too big to use with normal compression.\n");
                 fprintf(stderr, "Use the -o flag to use the memory optimized version.\n");
                 exit(1);
@@ -135,7 +137,9 @@ void compress(FILE* i_stream, FILE* o_stream, int optimized) {
         add_to_suffix_tree(root, ap, &remainder, buffer, &end_point, length);
 
         if (ms.state) {
-            // There was no match, we print
+            // There was no match found with the current substring, but there was
+            // without the new character, so we output the previous substring and
+            // reset everything.
             output o = {ms.pos, ms.len, (uint8_t) c};
             fwrite(&o, OUTPUT_SIZE, 1, o_stream);
             reset_match_state(&ms, root);
@@ -145,12 +149,14 @@ void compress(FILE* i_stream, FILE* o_stream, int optimized) {
 
     }
 
-    // Finally apply the find_match with the null character
+    // Finally apply the find_match with the null character to fully enclose the
+    // compression and get the right result.
     find_match(buffer, '\0', &ms);
 
     output o = {ms.pos, ms.len, (uint8_t) '\0'};
     fwrite(&o, OUTPUT_SIZE, 1, o_stream);
 
+    // Free stuff
     free(ap);
     free_node(root, &end_point);
     free(buffer);
@@ -173,6 +179,7 @@ void decompress(FILE* i_stream, FILE* o_stream, int optimized) {
         if (length + o.l >= c_size)
             buffer = realloc(buffer, sizeof(char) * (c_size *= 2));
 
+        // Just iterate through the used indices
         for (int i = o.p; i < o.p + o.l; i++)
             buffer[length++] = buffer[i];
 
