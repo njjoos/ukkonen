@@ -3,11 +3,11 @@
 #include "lz77.h"
 #include "../ukkonen/ukkonen.h"
 
-#define MAX_LENGTH 1000000
-#define START_SIZE 65536 // 2^16
-#define BLAND_CHAR (uint8_t) ~0 // = 255
-#define SIZE 9
-// #define TEST // Used for testing
+#define BLAND_CHAR  (uint8_t) ~0 // = 255
+#define MAX_LENGTH  10000000
+#define START_SIZE  65536 // 2^16
+#define OUTPUT_SIZE 9
+
 
 // Checks if we reached the end of an edge and updates the status
 void check_edge_length(match_state* ms) {
@@ -96,13 +96,8 @@ void compress(FILE* i_stream, FILE* o_stream, int optimized) {
         if (length >= MAX_LENGTH) {
             if (optimized) {
                 // First print out what we currently have with a unique character at the end
-                // (uint8_t) ~0 = 255
                 output o = {ms.pos, ms.len, BLAND_CHAR};
-                #ifndef TEST
-                fwrite(&o, SIZE, 1, o_stream);
-                #else
-                printf("%d %d [%d] \n", o.p, o.l, o.c);
-                #endif
+                fwrite(&o, OUTPUT_SIZE, 1, o_stream);
 
                 // Free
                 free(buffer);
@@ -142,11 +137,7 @@ void compress(FILE* i_stream, FILE* o_stream, int optimized) {
         if (ms.state) {
             // There was no match, we print
             output o = {ms.pos, ms.len, (uint8_t) c};
-            #ifndef TEST
-            fwrite(&o, SIZE, 1, o_stream);
-            #else
-            printf("%d %d %c \n", o.p, o.l, o.c);
-            #endif
+            fwrite(&o, OUTPUT_SIZE, 1, o_stream);
             reset_match_state(&ms, root);
         }
 
@@ -158,11 +149,8 @@ void compress(FILE* i_stream, FILE* o_stream, int optimized) {
     find_match(buffer, '\0', &ms);
 
     output o = {ms.pos, ms.len, (uint8_t) '\0'};
-    #ifndef TEST
-    fwrite(&o, SIZE, 1, o_stream);
-    #else
-    printf("%d %d [%d] \n", o.p, o.l, o.c);
-    #endif
+    fwrite(&o, OUTPUT_SIZE, 1, o_stream);
+
     free(ap);
     free_node(root, &end_point);
     free(buffer);
@@ -177,20 +165,16 @@ void decompress(FILE* i_stream, FILE* o_stream, int optimized) {
 
     output o;
 
-    while (fread(&o, SIZE, 1, i_stream)) {
+    while (fread(&o, OUTPUT_SIZE, 1, i_stream)) {
 
         // It might be that o.l is way bigger than c_size (e.g. o.l = 10000, c_size = 256)
         // but this will never because o.l is always smaller than c_size as o.l is the length of a
         // given position in the buffer that has size c_size
-        if (length + o.l >= c_size) {
-            c_size *= 2;
-            buffer = realloc(buffer, sizeof(char) * c_size);
-        }
+        if (length + o.l >= c_size)
+            buffer = realloc(buffer, sizeof(char) * (c_size *= 2));
 
-        for (int i = o.p; i < o.p + o.l; i++) {
-
+        for (int i = o.p; i < o.p + o.l; i++)
             buffer[length++] = buffer[i];
-        }
 
         if (optimized && o.c == BLAND_CHAR) {
             // When we optimized memory usage, we had to enter a special character which simply had
