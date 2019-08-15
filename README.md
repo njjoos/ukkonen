@@ -1,1 +1,1 @@
-# AD3 Project omtrent strings
+# Ukkonen & LZ77
